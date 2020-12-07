@@ -33,6 +33,8 @@ private:
     connection_pool *m_connPool;  //数据库
     int m_actor_model;          //模型切换
 };
+
+/*线程池构造函数，在此pthread_create线程，并注册worker，当线程唤醒时work->run内部有socket, db, http处理流程*/
 template <typename T>
 threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int thread_number, int max_requests) : m_actor_model(actor_model),m_thread_number(thread_number), m_max_requests(max_requests), m_threads(NULL),m_connPool(connPool)
 {
@@ -43,7 +45,7 @@ threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int threa
         throw std::exception();
     for (int i = 0; i < thread_number; ++i)
     {
-        if (pthread_create(m_threads + i, NULL, worker, this) != 0)
+        if (pthread_create(m_threads + i, NULL, worker, this) != 0) //worker为各工作线程内的处理函数
         {
             delete[] m_threads;
             throw std::exception();
@@ -96,6 +98,8 @@ void *threadpool<T>::worker(void *arg)
     pool->run();
     return pool;
 }
+
+/*recv socket*/
 template <typename T>
 void threadpool<T>::run()
 {

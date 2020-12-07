@@ -3,8 +3,11 @@
 TinyWebServer
 ===============
 
-fork自[qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer), 加了注释和小修改  
-以下是原项目README  
+fork自[qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer), 加了注释和小修改   
+以下是原项目README，新增了说明：  
+1 .sql配置文件的写入  
+2 链接库环境变量配置  
+
 -----
 
 Linux下C++轻量级Web服务器，助力初学者快速实践网络编程，搭建属于自己的服务器.
@@ -131,6 +134,7 @@ Demo演示
 	* 其他浏览器暂无测试
 
 * 测试前确认已安装MySQL数据库
+创建initdb.sql配置文件：  
 
     ```C++
     // 建立yourdb库
@@ -146,6 +150,14 @@ Demo演示
     // 添加数据
     INSERT INTO user(username, passwd) VALUES('name', 'passwd');
     ```
+写入mysql数据库：  
+
+
+    ```
+    mysql -u root -p    
+
+    >source /PATH/initdb.sql  
+    ```  
 
 * 修改main.cpp中的数据库初始化信息
 
@@ -161,6 +173,11 @@ Demo演示
     ```C++
     sh ./build.sh
     ```
+编译可能有找不到mysql库的情况，将build.sh内以下语句改成实际路径  
+    ```
+    export LIBRARY_PATH=/usr/lib64/mysql:$LIBRARY_PATH  
+    export LD_LIBRARY_PATH=/usr/lib64/mysql:$LD_LIBRARY_PATH  
+    ```  
 
 * 启动server
 

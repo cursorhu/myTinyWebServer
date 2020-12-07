@@ -19,22 +19,22 @@ int main(int argc, char *argv[])
                 config.close_log, config.actor_model);
     
 
-    //日志
+    //日志初始化
     server.log_init();
 
-    //数据库
+    //数据库初始化和用户数据获取
     server.sql_pool();
 
-    //线程池
+    //线程池初始化
     server.thread_pool();
 
-    //触发模式
+    //触发模式配置
     server.trig_mode();
 
-    //监听
+    //初始化socket及epoll
     server.eventListen();
 
-    //运行
+    //运行事件监听：epoll_wait
     server.eventLoop();
 
     return 0;

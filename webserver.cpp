@@ -96,7 +96,7 @@ void WebServer::sql_pool()
 
 void WebServer::thread_pool()
 {
-    //线程池
+    //成员是http_conn类型的线程池
     m_pool = new threadpool<http_conn>(m_actormodel, m_connPool, m_thread_num);
 }
 
@@ -129,7 +129,7 @@ void WebServer::eventListen()
     setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
     ret = bind(m_listenfd, (struct sockaddr *)&address, sizeof(address));
     assert(ret >= 0);
-    ret = listen(m_listenfd, 5);
+    ret = listen(m_listenfd, 5); //监听socket
     assert(ret >= 0);
 
     utils.init(TIMESLOT);
@@ -139,15 +139,15 @@ void WebServer::eventListen()
     m_epollfd = epoll_create(5);
     assert(m_epollfd != -1);
 
-    utils.addfd(m_epollfd, m_listenfd, false, m_LISTENTrigmode);
+    utils.addfd(m_epollfd, m_listenfd, false, m_LISTENTrigmode); //epoll_ctl实现，listenfd加到epollfd集合中，使内核监听listenfd的事件
     http_conn::m_epollfd = m_epollfd;
 
-    ret = socketpair(PF_UNIX, SOCK_STREAM, 0, m_pipefd);
+    ret = socketpair(PF_UNIX, SOCK_STREAM, 0, m_pipefd); //创建互联的双套接字，实现管道
     assert(ret != -1);
     utils.setnonblocking(m_pipefd[1]);
-    utils.addfd(m_epollfd, m_pipefd[0], false, 0);
+    utils.addfd(m_epollfd, m_pipefd[0], false, 0); //pipifd加到epollfd集合中 
 
-    utils.addsig(SIGPIPE, SIG_IGN);
+    utils.addsig(SIGPIPE, SIG_IGN); //sigfillset,设置要处理的信号集合
     utils.addsig(SIGALRM, utils.sig_handler, false);
     utils.addsig(SIGTERM, utils.sig_handler, false);
 
@@ -197,7 +197,7 @@ void WebServer::deal_timer(util_timer *timer, int sockfd)
     LOG_INFO("close fd %d", users_timer[sockfd].sockfd);
 }
 
-bool WebServer::dealclinetdata()
+bool WebServer::dealclientdata()
 {
     struct sockaddr_in client_address;
     socklen_t client_addrlength = sizeof(client_address);
@@ -392,10 +392,10 @@ void WebServer::eventLoop()
         {
             int sockfd = events[i].data.fd;
 
-            //处理新到的客户连接
+            //处理新到的客户连接请求
             if (sockfd == m_listenfd)
             {
-                bool flag = dealclinetdata();
+                bool flag = dealclientdata(); //accept
                 if (false == flag)
                     continue;
             }
@@ -412,7 +412,7 @@ void WebServer::eventLoop()
                 if (false == flag)
                     LOG_ERROR("%s", "dealclientdata failure");
             }
-            //处理客户连接上接收到的数据
+            //处理客户连接上接收到的数据，这里只放入读写队列，真正处理是thread内的threadpool<T>::worker
             else if (events[i].events & EPOLLIN)
             {
                 dealwithread(sockfd);
