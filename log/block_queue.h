@@ -126,12 +126,10 @@ public:
     //若当前没有线程等待条件变量,则唤醒无意义
     bool push(const T &item)
     {
-
         m_mutex.lock();
-        if (m_size >= m_max_size)
+        if (m_size >= m_max_size) //生产者队列已满，唤醒pop线程去消费
         {
-
-            m_cond.broadcast();
+            m_cond.broadcast(); //广播方式，唤醒所有等待目标条件变量的线程
             m_mutex.unlock();
             return false;
         }
@@ -145,21 +143,27 @@ public:
         m_mutex.unlock();
         return true;
     }
+
     //pop时,如果当前队列没有元素,将会等待条件变量
     bool pop(T &item)
     {
-
         m_mutex.lock();
-        while (m_size <= 0)
+        //多个消费者的时候，这里要用while而不是if
+        //原因：wait到信号！=资源可用，可能多个线程都在等待该信号，但只有一个资源可用
+        //这里资源是循环数组的成员
+        //broadcast唤醒所有wait的线程产生竞争，B先执行，处理资源，然后unlock切到线程A, 无资源可以。 
+        //用while使线程A继续等下一次资源可以条件。
+        while (m_size <= 0) 
         {
-            
-            if (!m_cond.wait(m_mutex.get()))
+            //等待目标条件变量，内部实现为pthread_cond_wait，传入条件变量和mutex互斥锁，锁是为了保护传入的条件变量
+            //pthread_cond_wait函数内部会有一次解锁和加锁操作，因为等待条件变量会阻塞自己，必须解锁使其他线程能访问加锁资源
+            if (!m_cond.wait(m_mutex.get())) //正常返回true
             {
                 m_mutex.unlock();
                 return false;
             }
         }
-
+        //将新增数据放在循环数组的对应位置
         m_front = (m_front + 1) % m_max_size;
         item = m_array[m_front];
         m_size--;
@@ -167,7 +171,8 @@ public:
         return true;
     }
 
-    //增加了超时处理
+    //pop重载，增加了超时处理
+    //在pthread_cond_wait基础上增加了等待的时间，只指定时间内能抢到互斥锁即可
     bool pop(T &item, int ms_timeout)
     {
         struct timespec t = {0, 0};

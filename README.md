@@ -3,7 +3,7 @@
 TinyWebServer
 ===============
 
-fork自[qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer), 加了注释和小修改   
+fork自[qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer), 加了详细注释，少量代码修改   
 以下是原项目README，新增了说明：  
 1 .sql配置文件的写入  
 2 链接库环境变量配置  
@@ -173,11 +173,11 @@ Demo演示
     ```C++
     sh ./build.sh
     ```
-编译可能有找不到mysql库的情况，将build.sh内以下语句改成实际路径  
+    makefile已添加库路径/usr/lib64/mysql，若还找不到mysql库的情况，手动加到环境变量  
     ```
     export LIBRARY_PATH=/usr/lib64/mysql:$LIBRARY_PATH  
     export LD_LIBRARY_PATH=/usr/lib64/mysql:$LD_LIBRARY_PATH  
-    ```  
+    ``` 
 
 * 启动server
 

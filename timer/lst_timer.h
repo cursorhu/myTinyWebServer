@@ -24,29 +24,51 @@
 #include <time.h>
 #include "../log/log.h"
 
+/*
+* 将连接资源、定时事件和超时时间封装为定时器类
+* 连接资源包括客户端套接字地址、文件描述符和定时器
+* 定时事件为回调函数，实现删除非活动socket上的注册事件，并关闭连接
+* 定时器超时时间 = 浏览器和服务器连接时刻 + 固定时间(TIMESLOT)
+* 
+* 
+* 
+* 
+* 
+*/
+
 class util_timer;
 
+//连接资源
 struct client_data
 {
-    sockaddr_in address;
-    int sockfd;
-    util_timer *timer;
+    sockaddr_in address; //客户端socket地址
+    int sockfd;         //socket文件描述符
+    util_timer *timer; //定时器
 };
 
+//定时器类
 class util_timer
 {
 public:
     util_timer() : prev(NULL), next(NULL) {}
 
 public:
-    time_t expire;
-    
-    void (* cb_func)(client_data *);
-    client_data *user_data;
-    util_timer *prev;
-    util_timer *next;
+    time_t expire; //超时时间
+    void (* cb_func)(client_data *); //回调函数，超时调用
+    client_data *user_data; //连接资源
+    util_timer *prev; //前向定时器
+    util_timer *next; //后继定时器
 };
 
+/*定时器容器类
+* 带头尾结点的升序双向链表，为每个连接创建一个定时器，并添加到链表中，按照超时时间升序排列，执行定时任务时，将超时的定时器从链表中删除。
+* 升序双向链表主要操作：
+* 1.创建头尾节点，其中头尾节点没有意义，仅仅统一方便调整
+* 2.add_timer函数，将目标定时器添加到链表中，添加时按照升序添加
+* 3.adjust_timer函数，当定时任务发生变化,调整对应定时器在链表中的位置
+* 4.del_timer函数将超时的定时器从链表中删除
+* 
+*/
 class sort_timer_lst
 {
 public:

@@ -83,7 +83,7 @@ public:
     {
         pthread_cond_destroy(&m_cond);
     }
-    bool wait(pthread_mutex_t *m_mutex)
+    bool wait(pthread_mutex_t *m_mutex) //等待条件变量已被signal或broadcast
     {
         int ret = 0;
         //pthread_mutex_lock(&m_mutex);
@@ -99,11 +99,11 @@ public:
         //pthread_mutex_unlock(&m_mutex);
         return ret == 0;
     }
-    bool signal()
+    bool signal() //一对一：解除一个等待条件m_cond的线程的阻塞状态，如果有多个线程也只唤醒一个
     {
         return pthread_cond_signal(&m_cond) == 0;
     }
-    bool broadcast()
+    bool broadcast() //一对多：解除所有等待条件m_cond的线程的阻塞状态，随后多个线程会竞争锁，竞争到的获得资源，没竞争到的休眠
     {
         return pthread_cond_broadcast(&m_cond) == 0;
     }
